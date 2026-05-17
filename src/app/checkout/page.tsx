@@ -189,13 +189,13 @@ export default function CheckoutPage() {
         {t.checkout.title}
       </h1>
 
-      <div className="grid lg:grid-cols-[1fr,400px] gap-8 lg:gap-12">
+      <div className="grid lg:grid-cols-[minmax(0,1fr),400px] gap-8 lg:gap-12">
         <motion.form
           id="checkout-form"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6"
+          className="space-y-6 min-w-0"
           noValidate
         >
           {/* Honeypot field (visually hidden, real users won't fill it) */}

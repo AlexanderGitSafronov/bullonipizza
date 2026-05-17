@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Zap } from "lucide-react";
+import { Clock, Zap, ChevronDown } from "lucide-react";
 import { useLocale } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +39,12 @@ export function SchedulePicker({
   const slots = useMemo(generateSlots, []);
   const hasSlots = slots.length > 0;
 
+  const fmtTime = (d: Date) =>
+    d.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
   return (
     <div>
       <p className="text-sm font-semibold mb-2">{t.scheduled.title}</p>
@@ -64,8 +70,6 @@ export function SchedulePicker({
         <button
           type="button"
           onClick={() => {
-            // Always switch into "scheduled" mode — even when slots is empty
-            // we still render the inline note below so the user understands.
             if (hasSlots) {
               onChange(
                 value !== null
@@ -88,10 +92,7 @@ export function SchedulePicker({
             </p>
             <p className="text-[10px] text-muted-foreground">
               {value !== null
-                ? new Date(value).toLocaleTimeString(locale, {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                ? fmtTime(new Date(value))
                 : hasSlots
                   ? t.scheduled.pickTime
                   : "—"}
@@ -108,30 +109,22 @@ export function SchedulePicker({
             exit={{ opacity: 0, height: 0 }}
             className="mt-3 overflow-hidden"
           >
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {slots.map((s) => {
-                const active = s.getTime() === value;
-                return (
-                  <button
-                    key={s.getTime()}
-                    type="button"
-                    onClick={() => onChange(s.getTime())}
-                    className={cn(
-                      "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors",
-                      active
-                        ? "bg-primary text-white border-primary"
-                        : "border-border bg-card hover:bg-secondary"
-                    )}
-                  >
-                    {s.toLocaleTimeString(locale, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </button>
-                );
-              })}
+            <div className="relative">
+              <select
+                value={value ?? ""}
+                onChange={(e) => onChange(Number(e.target.value))}
+                className="flex h-12 w-full appearance-none rounded-2xl border border-input bg-background pl-11 pr-10 text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+              >
+                {slots.map((s) => (
+                  <option key={s.getTime()} value={s.getTime()}>
+                    {fmtTime(s)}
+                  </option>
+                ))}
+              </select>
+              <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary pointer-events-none" />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-[10px] text-muted-foreground mt-1.5">
               {t.scheduled.note}
             </p>
           </motion.div>
