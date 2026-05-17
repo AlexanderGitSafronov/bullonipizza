@@ -58,11 +58,18 @@ export async function POST(req: Request) {
       );
     }
     const passwordHash = await hashPassword(parsed.data.password);
+    // Optional: bootstrap a single owner account as ADMIN on first signup.
+    // Set ADMIN_EMAIL in env (lower-cased). The check happens here so the
+    // owner never needs DB access; the role can still be edited from /admin.
+    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+    const role =
+      adminEmail && parsed.data.email === adminEmail ? "ADMIN" : "USER";
     const user = await prisma.user.create({
       data: {
         email: parsed.data.email,
         passwordHash,
         name: parsed.data.name || null,
+        role,
       },
       select: { id: true, email: true, role: true, name: true },
     });

@@ -1,68 +1,135 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Pizza, ShoppingBag, TrendingUp, Users } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  Pizza,
+  ShoppingBag,
+  TrendingUp,
+  Users,
+  Plus,
+  Edit3,
+  Trash2,
+  Lock,
+} from "lucide-react";
 import { useLocale } from "@/i18n/provider";
-import { useProductFields } from "@/hooks/use-product-fields";
+import { useAuth } from "@/store/auth";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice } from "@/lib/utils";
-import { sampleProducts } from "@/lib/sample-data";
+import { Button } from "@/components/ui/button";
+import { OrdersBoard } from "@/components/admin/orders-board";
+import {
+  ProductEditor,
+  type ProductRow,
+  type CategoryRow,
+} from "@/components/admin/product-editor";
+import { formatPrice, cn } from "@/lib/utils";
 
-interface StoredOrder {
-  orderNumber: string;
-  name: string;
-  phone: string;
-  total: number;
-  createdAt: number;
-}
+type Tab = "orders" | "products";
 
 export default function AdminPage() {
   const { t, locale } = useLocale();
-  const { nameOf } = useProductFields();
-  const [tab, setTab] = useState<"products" | "orders">("products");
-  const [orders, setOrders] = useState<StoredOrder[]>([]);
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [tab, setTab] = useState<Tab>("orders");
+  const [products, setProducts] = useState<ProductRow[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<ProductRow | null>(null);
+  const [stats, setStats] = useState({ orders: 0, revenue: 0, customers: 0 });
 
-  useEffect(() => {
+  const refresh = useCallback(async () => {
     try {
-      const stored = JSON.parse(localStorage.getItem("bp_orders") ?? "{}") as Record<
-        string,
-        StoredOrder
-      >;
-      setOrders(
-        Object.values(stored).sort((a, b) => b.createdAt - a.createdAt)
-      );
+      const [p, o] = await Promise.all([
+        fetch("/api/admin/products", { cache: "no-store" }),
+        fetch("/api/admin/orders", { cache: "no-store" }),
+      ]);
+      const pj = await p.json();
+      const oj = await o.json();
+      if (pj.ok) {
+        setProducts(pj.products);
+        setCategories(pj.categories);
+      }
+      if (oj.ok) {
+        const orders = oj.orders as Array<{
+          total: string;
+          phone: string;
+        }>;
+        setStats({
+          orders: orders.length,
+          revenue: orders.reduce((a, o) => a + Number(o.total), 0),
+          customers: new Set(orders.map((o) => o.phone)).size,
+        });
+      }
     } catch {
-      setOrders([]);
+      /* ignore */
     }
   }, []);
 
-  const totalRevenue = orders.reduce((acc, o) => acc + o.total, 0);
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace("/login?next=/admin");
+      return;
+    }
+    if (user.role !== "ADMIN") return;
+    void refresh();
+  }, [user, loading, router, refresh]);
 
-  const stats = [
+  if (loading) {
+    return (
+      <div className="container py-20 text-center text-muted-foreground">
+        {t.common.loading}
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  if (user.role !== "ADMIN") {
+    return (
+      <div className="container py-20 text-center max-w-md">
+        <div className="inline-flex h-20 w-20 rounded-full bg-destructive/10 items-center justify-center mb-6">
+          <Lock className="h-10 w-10 text-destructive" />
+        </div>
+        <h1 className="font-display text-3xl font-bold mb-2">
+          Access denied
+        </h1>
+        <p className="text-muted-foreground">
+          {locale === "en"
+            ? "Admin access only."
+            : locale === "ru"
+              ? "Только для администраторов."
+              : "Лише для адміністраторів."}
+        </p>
+      </div>
+    );
+  }
+
+  const statCards = [
     {
       icon: ShoppingBag,
-      label: t.admin.orders,
-      value: orders.length,
+      label: locale === "en" ? "Active orders" : locale === "ru" ? "Активных заказов" : "Активних замовлень",
+      value: stats.orders,
       color: "from-amber-500 to-orange-600",
     },
     {
       icon: TrendingUp,
-      label: locale === "en" ? "Revenue" : locale === "ru" ? "Выручка" : "Виручка",
-      value: formatPrice(totalRevenue),
+      label: locale === "en" ? "Active revenue" : locale === "ru" ? "Активная выручка" : "Активна виручка",
+      value: formatPrice(stats.revenue),
       color: "from-emerald-500 to-green-600",
     },
     {
       icon: Pizza,
       label: t.admin.products,
-      value: sampleProducts.length,
+      value: products.filter((p) => p.isAvailable).length,
       color: "from-rose-500 to-red-600",
     },
     {
       icon: Users,
       label: locale === "en" ? "Customers" : locale === "ru" ? "Клиенты" : "Клієнти",
-      value: new Set(orders.map((o) => o.phone)).size,
+      value: stats.customers,
       color: "from-violet-500 to-purple-600",
     },
   ];
@@ -72,18 +139,31 @@ export default function AdminPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-8 flex items-center justify-between gap-4 flex-wrap"
       >
-        <h1 className="font-display text-3xl md:text-4xl font-bold">
-          {t.admin.title}
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          BulloniPizza · {locale === "en" ? "Dashboard" : locale === "ru" ? "Панель" : "Панель"}
-        </p>
+        <div>
+          <h1 className="font-display text-3xl md:text-4xl font-bold">
+            {t.admin.title}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {user.email}
+          </p>
+        </div>
+        {tab === "products" && (
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setEditorOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            {t.admin.new}
+          </Button>
+        )}
       </motion.div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((s, i) => (
+        {statCards.map((s, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 10 }}
@@ -103,109 +183,135 @@ export default function AdminPage() {
       </div>
 
       <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setTab("products")}
-          className={`px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
-            tab === "products"
-              ? "bg-foreground text-background"
-              : "bg-secondary text-foreground"
-          }`}
-        >
-          {t.admin.products}
-        </button>
-        <button
-          onClick={() => setTab("orders")}
-          className={`px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
-            tab === "orders"
-              ? "bg-foreground text-background"
-              : "bg-secondary text-foreground"
-          }`}
-        >
-          {t.admin.orders}
-        </button>
+        {(["orders", "products"] as Tab[]).map((k) => (
+          <button
+            key={k}
+            onClick={() => setTab(k)}
+            className={cn(
+              "px-5 py-2.5 rounded-full text-sm font-medium transition-colors",
+              tab === k
+                ? "bg-foreground text-background"
+                : "bg-secondary text-foreground"
+            )}
+          >
+            {k === "orders" ? t.admin.orders : t.admin.products}
+          </button>
+        ))}
       </div>
 
-      {tab === "products" ? (
+      {tab === "orders" && <OrdersBoard />}
+
+      {tab === "products" && (
         <div className="rounded-3xl border border-border bg-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-secondary/50">
                 <tr className="text-left text-xs text-muted-foreground uppercase">
-                  <th className="p-4">{locale === "en" ? "Product" : "Продукт"}</th>
-                  <th className="p-4">{t.menu.popular}</th>
-                  <th className="p-4 text-right">
-                    {locale === "en" ? "Price" : locale === "ru" ? "Цена" : "Ціна"}
-                  </th>
+                  <th className="p-4">Product</th>
+                  <th className="p-4">Flags</th>
+                  <th className="p-4 text-right">Price</th>
+                  <th className="p-4 w-1"></th>
                 </tr>
               </thead>
               <tbody>
-                {sampleProducts.map((p) => (
-                  <tr key={p.id} className="border-t border-border">
+                {products.map((p) => (
+                  <tr
+                    key={p.id}
+                    className={cn(
+                      "border-t border-border",
+                      !p.isAvailable && "opacity-50"
+                    )}
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="relative h-10 w-10 rounded-xl overflow-hidden bg-secondary shrink-0">
-                          <Image
-                            src={p.image}
-                            alt=""
-                            fill
-                            sizes="40px"
-                            className="object-cover"
-                          />
+                        <div className="relative h-12 w-12 rounded-xl overflow-hidden bg-secondary shrink-0">
+                          {p.image && (
+                            <Image
+                              src={p.image}
+                              alt=""
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
+                          )}
                         </div>
-                        <span className="font-medium">{nameOf(p)}</span>
+                        <div>
+                          <p className="font-medium">{p.nameUk}</p>
+                          <p className="text-[11px] text-muted-foreground font-mono">
+                            {p.slug}
+                          </p>
+                        </div>
                       </div>
                     </td>
                     <td className="p-4">
-                      {p.isPopular ? (
-                        <Badge variant="hot">🔥</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {p.isPopular && <Badge variant="hot">🔥</Badge>}
+                        {!p.isAvailable && (
+                          <Badge variant="outline">hidden</Badge>
+                        )}
+                        {p.discount > 0 && (
+                          <Badge variant="warning">−{p.discount}%</Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4 text-right font-semibold">
-                      {formatPrice(p.basePrice)}
+                      {formatPrice(Number(p.basePrice))}
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditing(p);
+                            setEditorOpen(true);
+                          }}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={async () => {
+                            if (
+                              !confirm(`Hide product "${p.nameUk}"?`)
+                            )
+                              return;
+                            await fetch(`/api/admin/products/${p.id}`, {
+                              method: "DELETE",
+                            });
+                            void refresh();
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-rose-500" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
+                {products.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="p-8 text-center text-muted-foreground"
+                    >
+                      No products yet
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
-      ) : (
-        <div className="rounded-3xl border border-border bg-card overflow-hidden">
-          {orders.length === 0 ? (
-            <div className="p-10 text-center text-muted-foreground">
-              <p className="text-4xl mb-3">📋</p>
-              <p>{locale === "en" ? "No orders yet" : locale === "ru" ? "Заказов пока нет" : "Замовлень ще немає"}</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-secondary/50">
-                  <tr className="text-left text-xs text-muted-foreground uppercase">
-                    <th className="p-4">{t.order.number}</th>
-                    <th className="p-4">{t.checkout.name}</th>
-                    <th className="p-4">{t.checkout.phone}</th>
-                    <th className="p-4 text-right">{t.cart.total}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((o) => (
-                    <tr key={o.orderNumber} className="border-t border-border">
-                      <td className="p-4 font-mono text-xs">{o.orderNumber}</td>
-                      <td className="p-4">{o.name}</td>
-                      <td className="p-4 text-muted-foreground">{o.phone}</td>
-                      <td className="p-4 text-right font-semibold">
-                        {formatPrice(o.total)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       )}
+
+      <ProductEditor
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        product={editing}
+        categories={categories}
+        onSaved={() => void refresh()}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   LogOut,
   LogIn,
   UserPlus,
+  Shield,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,14 @@ export function AccountMenu() {
             {t.nav.favorites}
           </Link>
         </DropdownMenuItem>
+        {user.role === "ADMIN" && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin" className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary" />
+              {t.nav.admin}
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}
