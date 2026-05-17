@@ -120,6 +120,13 @@ export const ru: Dictionary = {
       parmesan: "Пармезан",
     },
     total: "Всего",
+    quantity: "Количество",
+    related: "Попробуйте также",
+    backToMenu: "Назад в меню",
+    notFound: "Блюдо не найдено",
+    description: "Описание",
+    composition: "Состав",
+    chooseOptions: "Выберите опции",
   },
   cart: {
     title: "Твоя корзина",

@@ -120,6 +120,13 @@ export const en: Dictionary = {
       parmesan: "Parmesan",
     },
     total: "Total",
+    quantity: "Quantity",
+    related: "You may also like",
+    backToMenu: "Back to menu",
+    notFound: "Product not found",
+    description: "Description",
+    composition: "Composition",
+    chooseOptions: "Choose options",
   },
   cart: {
     title: "Your cart",

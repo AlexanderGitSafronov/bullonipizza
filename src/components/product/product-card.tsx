@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart, Plus, Flame } from "lucide-react";
 import { useState } from "react";
@@ -40,7 +41,12 @@ export function ProductCard({
     discount: product.discount ?? 0,
   });
 
-  const handleQuickAdd = () => {
+  // Quick-add: open the modal for customizable items, otherwise pop it
+  // straight into the cart. The card body still routes to /menu/[slug]
+  // so users can read the full description before committing.
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (product.hasSize || product.hasCrust) {
       setOpen(true);
       return;
@@ -62,6 +68,7 @@ export function ProductCard({
   };
 
   const isFav = fav.has(product.id);
+  const href = `/menu/${product.slug}`;
 
   return (
     <>
@@ -73,7 +80,15 @@ export function ProductCard({
         whileHover={{ y: -4 }}
         className="group relative flex flex-col overflow-hidden rounded-3xl bg-card border border-border shadow-card hover:shadow-soft transition-shadow"
       >
-        <div className="relative aspect-square overflow-hidden bg-secondary">
+        {/* Whole-card link sits behind the interactive controls so it
+            doesn't steal their clicks. */}
+        <Link
+          href={href}
+          aria-label={name}
+          className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-3xl"
+        />
+
+        <div className="relative aspect-square overflow-hidden bg-secondary pointer-events-none">
           <Image
             src={product.image}
             alt={name}
@@ -96,23 +111,23 @@ export function ProductCard({
           </div>
 
           <button
+            type="button"
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               fav.toggle(product.id);
             }}
             className={cn(
-              "absolute top-3 right-3 h-9 w-9 rounded-full backdrop-blur bg-background/80 flex items-center justify-center transition-colors",
+              "absolute top-3 right-3 h-9 w-9 rounded-full backdrop-blur bg-background/80 flex items-center justify-center transition-colors pointer-events-auto z-10",
               isFav && "bg-primary text-white"
             )}
             aria-label="favorite"
           >
-            <Heart
-              className={cn("h-4 w-4", isFav && "fill-current")}
-            />
+            <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col p-4">
+        <div className="relative flex flex-1 flex-col p-4 pointer-events-none">
           <h3 className="font-display font-bold text-lg leading-tight">
             {name}
           </h3>
@@ -133,7 +148,8 @@ export function ProductCard({
             <Button
               size="sm"
               onClick={handleQuickAdd}
-              className="rounded-2xl shrink-0"
+              className="rounded-2xl shrink-0 pointer-events-auto relative z-10"
+              aria-label={t.product.addToCart}
             >
               <Plus className="h-4 w-4" />
             </Button>

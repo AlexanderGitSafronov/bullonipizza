@@ -118,6 +118,13 @@ export const uk = {
       parmesan: "Пармезан",
     },
     total: "Всього",
+    quantity: "Кількість",
+    related: "Спробуйте також",
+    backToMenu: "Назад до меню",
+    notFound: "Страву не знайдено",
+    description: "Опис",
+    composition: "Склад",
+    chooseOptions: "Оберіть опції",
   },
   cart: {
     title: "Твій кошик",
