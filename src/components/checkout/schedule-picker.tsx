@@ -6,17 +6,21 @@ import { Clock, Zap } from "lucide-react";
 import { useLocale } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 
-// Returns the next half-hour slots between now+1h and end-of-day (22:00 by default).
+// Slots between now+30min (rounded up to nearest 15) and 22:30.
 function generateSlots(): Date[] {
   const slots: Date[] = [];
   const now = new Date();
   const start = new Date(now);
-  // Round up to next 30min, +60 min lead time.
-  start.setMinutes(start.getMinutes() + 60);
-  start.setMinutes(start.getMinutes() < 30 ? 30 : 60, 0, 0);
+  start.setMinutes(start.getMinutes() + 30, 0, 0);
+  const mins = start.getMinutes();
+  const remainder = mins % 15;
+  if (remainder > 0) {
+    start.setMinutes(mins + (15 - remainder));
+  }
   const end = new Date(now);
-  end.setHours(22, 0, 0, 0);
-  for (let t = start.getTime(); t <= end.getTime(); t += 30 * 60 * 1000) {
+  end.setHours(22, 30, 0, 0);
+  if (end.getTime() < start.getTime()) return [];
+  for (let t = start.getTime(); t <= end.getTime(); t += 15 * 60 * 1000) {
     slots.push(new Date(t));
   }
   return slots;
@@ -60,17 +64,22 @@ export function SchedulePicker({
         <button
           type="button"
           onClick={() => {
-            if (slots.length > 0 && value === null)
-              onChange(slots[Math.min(2, slots.length - 1)].getTime());
+            // Always switch into "scheduled" mode — even when slots is empty
+            // we still render the inline note below so the user understands.
+            if (hasSlots) {
+              onChange(
+                value !== null
+                  ? value
+                  : slots[Math.min(2, slots.length - 1)].getTime()
+              );
+            }
           }}
           className={cn(
             "flex items-center gap-2 px-3 py-3 rounded-2xl border text-left transition-all",
             value !== null
               ? "border-primary bg-accent text-foreground"
-              : "border-border bg-card hover:bg-secondary",
-            !hasSlots && "opacity-50 cursor-not-allowed"
+              : "border-border bg-card hover:bg-secondary"
           )}
-          disabled={!hasSlots}
         >
           <Clock className="h-4 w-4 text-primary shrink-0" />
           <div className="min-w-0">
@@ -83,7 +92,9 @@ export function SchedulePicker({
                     hour: "2-digit",
                     minute: "2-digit",
                   })
-                : t.scheduled.pickTime}
+                : hasSlots
+                  ? t.scheduled.pickTime
+                  : "—"}
             </p>
           </div>
         </button>
@@ -126,6 +137,16 @@ export function SchedulePicker({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {!hasSlots && (
+        <p className="mt-3 text-xs text-muted-foreground italic">
+          {locale === "en"
+            ? "No slots available today — order ASAP or come back tomorrow."
+            : locale === "ru"
+              ? "На сегодня слотов нет — закажите сейчас или приходите завтра."
+              : "На сьогодні слотів немає — замовте зараз або поверніться завтра."}
+        </p>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   useState,
   useCallback,
 } from "react";
+import { useAddresses } from "./addresses";
 
 export interface AuthUser {
   id: string;
@@ -27,8 +28,20 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUserState] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Wrap the raw setter so user-dependent stores (addresses) stay in sync
+  // whenever the auth state changes — including the `setUser` call after
+  // login/register where we don't go through /api/auth/me again.
+  const setUser = useCallback((u: AuthUser | null) => {
+    setUserState(u);
+    if (u) {
+      void useAddresses.getState().refresh();
+    } else {
+      useAddresses.getState().reset();
+    }
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -44,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setUser]);
 
   const logout = useCallback(async () => {
     try {
@@ -53,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /* network failure — local state still cleared */
     }
     setUser(null);
-  }, []);
+  }, [setUser]);
 
   useEffect(() => {
     void refresh();

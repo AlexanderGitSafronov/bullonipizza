@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { create as createStore } from "zustand";
 import toast from "react-hot-toast";
-import { useAuth } from "./auth";
 
 export interface SavedAddress {
   id: string;
@@ -12,13 +11,16 @@ export interface SavedAddress {
   createdAt: string;
 }
 
-interface UseAddresses {
+interface AddressesStore {
   addresses: SavedAddress[];
   loading: boolean;
   refresh: () => Promise<void>;
-  create: (
-    data: { label?: string; address: string; isDefault?: boolean }
-  ) => Promise<SavedAddress | null>;
+  reset: () => void;
+  create: (data: {
+    label?: string;
+    address: string;
+    isDefault?: boolean;
+  }) => Promise<SavedAddress | null>;
   update: (
     id: string,
     data: Partial<{ label: string; address: string; isDefault: boolean }>
@@ -26,34 +28,33 @@ interface UseAddresses {
   remove: (id: string) => Promise<boolean>;
 }
 
-// Tiny hook around the addresses API — used by /profile and /checkout.
-export function useAddresses(): UseAddresses {
-  const { user } = useAuth();
-  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
-  const [loading, setLoading] = useState(false);
+// Single shared store — every component subscribing to `useAddresses` reads
+// the same state. AuthProvider triggers refresh on login and reset on logout,
+// so the list is always in sync with the current user across pages.
+export const useAddresses = createStore<AddressesStore>((set, get) => ({
+  addresses: [],
+  loading: false,
 
-  const refresh = useCallback(async () => {
-    if (!user) {
-      setAddresses([]);
-      return;
-    }
-    setLoading(true);
+  reset: () => set({ addresses: [], loading: false }),
+
+  refresh: async () => {
+    set({ loading: true });
     try {
       const res = await fetch("/api/addresses", { cache: "no-store" });
+      if (!res.ok) {
+        set({ addresses: [] });
+        return;
+      }
       const body = await res.json();
-      if (body.ok) setAddresses(body.addresses);
+      if (body.ok) set({ addresses: body.addresses });
     } catch {
       /* ignore */
     } finally {
-      setLoading(false);
+      set({ loading: false });
     }
-  }, [user]);
+  },
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  const create: UseAddresses["create"] = async (data) => {
+  create: async (data) => {
     try {
       const res = await fetch("/api/addresses", {
         method: "POST",
@@ -62,22 +63,22 @@ export function useAddresses(): UseAddresses {
       });
       const body = await res.json();
       if (!res.ok || !body.ok) {
-        if (body.error === "too_many_addresses") {
-          toast.error("Up to 10 addresses per profile");
-        } else {
-          toast.error("Save failed");
-        }
+        toast.error(
+          body.error === "too_many_addresses"
+            ? "Up to 10 addresses per profile"
+            : "Save failed"
+        );
         return null;
       }
-      await refresh();
+      await get().refresh();
       return body.address as SavedAddress;
     } catch {
       toast.error("Save failed");
       return null;
     }
-  };
+  },
 
-  const update: UseAddresses["update"] = async (id, data) => {
+  update: async (id, data) => {
     try {
       const res = await fetch(`/api/addresses/${id}`, {
         method: "PATCH",
@@ -89,24 +90,22 @@ export function useAddresses(): UseAddresses {
         toast.error("Save failed");
         return false;
       }
-      await refresh();
+      await get().refresh();
       return true;
     } catch {
       toast.error("Save failed");
       return false;
     }
-  };
+  },
 
-  const remove: UseAddresses["remove"] = async (id) => {
+  remove: async (id) => {
     try {
       const res = await fetch(`/api/addresses/${id}`, { method: "DELETE" });
       if (!res.ok) return false;
-      await refresh();
+      await get().refresh();
       return true;
     } catch {
       return false;
     }
-  };
-
-  return { addresses, loading, refresh, create, update, remove };
-}
+  },
+}));
