@@ -5,18 +5,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, MapPin, Star, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/store/cart";
 import { useLocale } from "@/i18n/provider";
 import { useProductFields } from "@/hooks/use-product-fields";
-import { formatPrice, generateOrderNumber } from "@/lib/utils";
+import { useAuth } from "@/store/auth";
+import { useAddresses } from "@/store/addresses";
+import { formatPrice, generateOrderNumber, cn } from "@/lib/utils";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validation";
 
 export default function CheckoutPage() {
@@ -25,7 +28,13 @@ export default function CheckoutPage() {
   const router = useRouter();
   const cart = useCart();
   const items = cart.items;
+  const { user } = useAuth();
+  const { addresses, create: createAddress } = useAddresses();
   const [submitting, setSubmitting] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null
+  );
+  const [saveAddress, setSaveAddress] = useState(false);
 
   const {
     register,
@@ -40,6 +49,32 @@ export default function CheckoutPage() {
 
   const consentChecked = watch("consent");
   const ageChecked = watch("age");
+  const currentAddress = watch("address");
+
+  // Pre-fill name from the logged-in user once.
+  useEffect(() => {
+    if (user?.name) setValue("name", user.name);
+  }, [user?.name, setValue]);
+
+  // Auto-pick the default address on first load.
+  useEffect(() => {
+    if (selectedAddressId) return;
+    const def = addresses.find((a) => a.isDefault) ?? addresses[0];
+    if (def) {
+      setValue("address", def.address, { shouldValidate: true });
+      setSelectedAddressId(def.id);
+    }
+  }, [addresses, selectedAddressId, setValue]);
+
+  // If the user edits the address text by hand, drop the "selected"
+  // highlight so they aren't visually locked to a saved one.
+  useEffect(() => {
+    if (!selectedAddressId) return;
+    const sel = addresses.find((a) => a.id === selectedAddressId);
+    if (sel && currentAddress !== sel.address) {
+      setSelectedAddressId(null);
+    }
+  }, [currentAddress, selectedAddressId, addresses]);
 
   const onSubmit = async (data: CheckoutInput) => {
     if (items.length === 0) return;
@@ -87,6 +122,11 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       }).catch(() => {});
+
+      // Save the address to the profile if the user opted in.
+      if (user && saveAddress && data.address) {
+        void createAddress({ address: data.address }).catch(() => {});
+      }
 
       cart.clear();
       toast.success(t.checkout.success);
@@ -193,6 +233,60 @@ export default function CheckoutPage() {
           </Section>
 
           <Section title={t.checkout.address}>
+            {user && addresses.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                  {t.addresses.pickSaved}
+                </p>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {addresses.map((a) => {
+                    const active = selectedAddressId === a.id;
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => {
+                          setValue("address", a.address, {
+                            shouldValidate: true,
+                          });
+                          setSelectedAddressId(a.id);
+                          setSaveAddress(false);
+                        }}
+                        className={cn(
+                          "relative flex items-start gap-2 p-3 rounded-2xl border text-left transition-all",
+                          active
+                            ? "border-primary bg-accent shadow-soft"
+                            : "border-border bg-secondary/30 hover:bg-secondary/60"
+                        )}
+                      >
+                        <MapPin
+                          className={cn(
+                            "h-4 w-4 mt-0.5 shrink-0",
+                            active ? "text-primary" : "text-muted-foreground"
+                          )}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            {a.label && (
+                              <span className="text-xs font-semibold truncate">
+                                {a.label}
+                              </span>
+                            )}
+                            {a.isDefault && (
+                              <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                            )}
+                          </div>
+                          <p className="text-xs text-foreground/80 line-clamp-2">
+                            {a.address}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <Label htmlFor="address">{t.checkout.addressField}</Label>
             <Input
               id="address"
@@ -207,6 +301,33 @@ export default function CheckoutPage() {
                 {errMsg(errors.address.message)}
               </p>
             )}
+
+            {user && !selectedAddressId && currentAddress && (
+              <label className="mt-3 flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  checked={saveAddress}
+                  onChange={(e) => setSaveAddress(e.target.checked)}
+                  className="h-4 w-4 accent-primary"
+                />
+                <span className="text-muted-foreground">
+                  {t.addresses.saveForLater}
+                </span>
+              </label>
+            )}
+
+            {!user && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                <Link
+                  href={`/login?next=${encodeURIComponent("/checkout")}`}
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {t.auth.login}
+                </Link>{" "}
+                · {t.addresses.subtitle.toLowerCase()}
+              </p>
+            )}
+
             <div className="mt-4">
               <Label htmlFor="comment">{t.checkout.comment}</Label>
               <Textarea

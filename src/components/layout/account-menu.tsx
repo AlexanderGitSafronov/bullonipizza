@@ -9,6 +9,7 @@ import {
   LogIn,
   UserPlus,
   Shield,
+  Heart,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,12 @@ export function AccountMenu() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
+          <Link href="/profile" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            {t.auth.profile}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/orders" className="flex items-center gap-2">
             <ShoppingBag className="h-4 w-4" />
             {t.auth.myOrders}
@@ -75,7 +82,7 @@ export function AccountMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/favorites" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
+            <Heart className="h-4 w-4" />
             {t.nav.favorites}
           </Link>
         </DropdownMenuItem>

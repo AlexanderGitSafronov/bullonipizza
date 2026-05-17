@@ -75,3 +75,21 @@ export const orderApiSchema = z.object({
 });
 
 export type OrderApiInput = z.infer<typeof orderApiSchema>;
+
+export const addressSchema = z.object({
+  label: z
+    .string()
+    .transform((v) => sanitize(v))
+    .pipe(z.string().max(40))
+    .optional()
+    .or(z.literal("")),
+  address: z
+    .string()
+    .transform(sanitize)
+    .pipe(z.string().min(5).max(200)),
+  isDefault: z.boolean().optional().default(false),
+});
+
+export const addressUpdateSchema = addressSchema.partial();
+
+export type AddressInput = z.infer<typeof addressSchema>;
