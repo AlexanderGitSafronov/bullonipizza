@@ -47,7 +47,7 @@ export function LiveStats() {
       <motion.span
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium ${
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium leading-none ${
           hours.open
             ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/30"
             : "bg-rose-500/10 text-rose-500 border border-rose-500/30"
@@ -69,10 +69,10 @@ export function LiveStats() {
             key={stats.ordersToday}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium glass border border-border"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium leading-none glass border border-border"
           >
             <Flame className="h-3.5 w-3.5 text-primary" />
-            <span className="font-display font-bold">{stats.ordersToday}</span>{" "}
+            <span className="font-bold tabular-nums">{stats.ordersToday}</span>{" "}
             {t.stats.ordersToday}
           </motion.span>
         )}
@@ -84,10 +84,10 @@ export function LiveStats() {
             key={stats.inOven}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium glass border border-border"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium leading-none glass border border-border"
           >
             <ChefHat className="h-3.5 w-3.5 text-orange-500" />
-            <span className="font-display font-bold">{stats.inOven}</span>{" "}
+            <span className="font-bold tabular-nums">{stats.inOven}</span>{" "}
             {t.stats.inOven}
           </motion.span>
         )}
