@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  DELIVERING
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  role      Role     @default(USER)
+  orders    Order[]
+  favorites Favorite[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  nameUk    String
+  nameEn    String
+  nameRu    String
+  icon      String?
+  order     Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  nameUk        String
+  nameEn        String
+  nameRu        String
+  descUk        String
+  descEn        String
+  descRu        String
+  image         String
+  basePrice     Decimal  @db.Decimal(10, 2)
+  category      Category @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  isPopular     Boolean  @default(false)
+  isAvailable   Boolean  @default(true)
+  hasSize       Boolean  @default(true)
+  hasCrust      Boolean  @default(true)
+  discount      Int      @default(0)
+  orderItems    OrderItem[]
+  favorites     Favorite[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  orderNumber  String      @unique
+  user         User?       @relation(fields: [userId], references: [id])
+  userId       String?
+  customerName String
+  phone        String
+  address      String
+  comment      String?
+  status       OrderStatus @default(PENDING)
+  subtotal     Decimal     @db.Decimal(10, 2)
+  deliveryFee  Decimal     @db.Decimal(10, 2) @default(0)
+  total        Decimal     @db.Decimal(10, 2)
+  estimatedAt  DateTime?
+  items        OrderItem[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId    String
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+  quantity   Int      @default(1)
+  size       String?
+  crust      String?
+  extras     String[]
+  price      Decimal  @db.Decimal(10, 2)
+}
+
+model PromoBanner {
+  id        String   @id @default(cuid())
+  titleUk   String
+  titleEn   String
+  titleRu   String
+  descUk    String
+  descEn    String
+  descRu    String
+  image     String
+  ctaLink   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

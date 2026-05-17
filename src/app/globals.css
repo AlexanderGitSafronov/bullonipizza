@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 36 56% 98%;
+    --foreground: 20 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 30% 12%;
+
+    --primary: 19 89% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 35 100% 95%;
+    --secondary-foreground: 20 30% 18%;
+
+    --muted: 30 25% 94%;
+    --muted-foreground: 20 12% 42%;
+
+    --accent: 30 90% 92%;
+    --accent-foreground: 19 89% 28%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 18% 88%;
+    --input: 30 18% 88%;
+    --ring: 19 89% 53%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 20 18% 7%;
+    --foreground: 35 40% 96%;
+
+    --card: 20 16% 11%;
+    --card-foreground: 35 40% 96%;
+
+    --popover: 20 16% 11%;
+    --popover-foreground: 35 40% 96%;
+
+    --primary: 19 89% 56%;
+    --primary-foreground: 20 30% 8%;
+
+    --secondary: 20 14% 16%;
+    --secondary-foreground: 35 40% 92%;
+
+    --muted: 20 14% 16%;
+    --muted-foreground: 30 12% 65%;
+
+    --accent: 19 60% 22%;
+    --accent-foreground: 35 90% 92%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 20 14% 20%;
+    --input: 20 14% 20%;
+    --ring: 19 89% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-xl bg-background/60 border border-white/10;
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, #f26a1a, #d9510c);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .grain {
+    background-image: radial-gradient(
+      rgba(0, 0, 0, 0.04) 1px,
+      transparent 1px
+    );
+    background-size: 4px 4px;
+  }
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.25);
+}
