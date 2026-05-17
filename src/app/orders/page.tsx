@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLocale } from "@/i18n/provider";
 import { useAuth } from "@/store/auth";
 import { formatPrice, cn } from "@/lib/utils";
@@ -81,8 +82,14 @@ export default function OrdersListPage() {
 
   if (loading || (!user && loadingOrders)) {
     return (
-      <div className="container py-20 text-center text-muted-foreground">
-        {t.common.loading}
+      <div className="container py-8 md:py-12 space-y-3">
+        <Skeleton className="h-10 w-1/3" />
+        <Skeleton className="h-4 w-1/4" />
+        <div className="space-y-2.5 pt-4">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
       </div>
     );
   }

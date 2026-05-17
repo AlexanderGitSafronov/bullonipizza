@@ -78,19 +78,52 @@ export async function POST(req: Request) {
       );
     }
 
-    const order = await prisma.order.create({
-      data: {
-        orderNumber: data.orderNumber,
-        userId: session?.sub ?? null,
-        customerName: data.name,
-        phone: data.phone,
-        address: data.address,
-        comment: data.comment || null,
-        subtotal: data.subtotal,
-        deliveryFee: data.deliveryFee,
-        total: data.total,
-        items: { create: itemsToCreate },
-      },
+    // If a promo code was applied, validate and increment uses atomically
+    // so we can't double-spend it under contention.
+    let promoCodeUpper: string | null = null;
+    let appliedDiscount = data.discount ?? 0;
+    if (data.promoCode) {
+      promoCodeUpper = data.promoCode.toUpperCase();
+      const promo = await prisma.promoCode.findUnique({
+        where: { code: promoCodeUpper },
+      });
+      const now = new Date();
+      const expired = !!(promo?.expiresAt && promo.expiresAt < now);
+      const exhausted = !!(promo?.maxUses && promo.uses >= promo.maxUses);
+      if (!promo || !promo.isActive || expired || exhausted) {
+        // Don't fail the order; just drop the promo silently and re-bill
+        // without discount. The client should have validated it already.
+        promoCodeUpper = null;
+        appliedDiscount = 0;
+      }
+    }
+
+    const order = await prisma.$transaction(async (tx) => {
+      if (promoCodeUpper) {
+        await tx.promoCode.update({
+          where: { code: promoCodeUpper },
+          data: { uses: { increment: 1 } },
+        });
+      }
+      return tx.order.create({
+        data: {
+          orderNumber: data.orderNumber,
+          userId: session?.sub ?? null,
+          customerName: data.name,
+          phone: data.phone,
+          address: data.address,
+          comment: data.comment || null,
+          subtotal: data.subtotal,
+          deliveryFee: data.deliveryFee,
+          discount: appliedDiscount,
+          promoCode: promoCodeUpper,
+          total: data.total,
+          scheduledFor: data.scheduledFor
+            ? new Date(data.scheduledFor)
+            : null,
+          items: { create: itemsToCreate },
+        },
+      });
     });
     return NextResponse.json({
       ok: true,

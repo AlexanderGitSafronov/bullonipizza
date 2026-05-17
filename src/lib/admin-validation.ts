@@ -26,6 +26,7 @@ export const productCreateSchema = z.object({
   categoryId: z.string().min(1).max(64),
   isPopular: z.boolean().default(false),
   isAvailable: z.boolean().default(true),
+  inStock: z.boolean().default(true),
   hasSize: z.boolean().default(true),
   hasCrust: z.boolean().default(true),
   discount: z.number().int().min(0).max(95).default(0),

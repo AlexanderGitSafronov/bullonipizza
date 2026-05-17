@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Star, Truck, Pizza } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LiveStats } from "@/components/sections/live-stats";
 import { useLocale } from "@/i18n/provider";
 
 export function Hero() {
@@ -26,9 +27,10 @@ export function Hero() {
           transition={{ duration: 0.6 }}
           className="text-center lg:text-left"
         >
-          <Badge variant="glass" className="mb-5">
-            {t.hero.badge}
-          </Badge>
+          <div className="mb-5 flex flex-wrap items-center gap-2 justify-center lg:justify-start">
+            <Badge variant="glass">{t.hero.badge}</Badge>
+            <LiveStats />
+          </div>
 
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05]">
             {t.hero.title}

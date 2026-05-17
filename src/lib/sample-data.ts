@@ -12,6 +12,7 @@ export type SampleProduct = {
   basePrice: number;
   categorySlug: string;
   isPopular?: boolean;
+  inStock?: boolean;
   hasSize: boolean;
   hasCrust: boolean;
   discount?: number;

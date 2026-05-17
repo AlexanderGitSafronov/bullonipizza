@@ -17,10 +17,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import toast from "react-hot-toast";
 import { useLocale } from "@/i18n/provider";
 import { useProductFields } from "@/hooks/use-product-fields";
+import { useCart } from "@/store/cart";
 import { formatPrice, cn } from "@/lib/utils";
 import { sampleProducts } from "@/lib/sample-data";
+import { Repeat } from "lucide-react";
 
 type Status =
   | "PENDING"
@@ -77,6 +80,8 @@ export default function OrderPage() {
   const { id } = useParams<{ id: string }>();
   const { t, locale } = useLocale();
   const { nameOf } = useProductFields();
+  const addItem = useCart((s) => s.addItem);
+  const openCart = useCart((s) => s.open);
   const [order, setOrder] = useState<UnifiedOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [pulsing, setPulsing] = useState(false);
@@ -161,6 +166,27 @@ export default function OrderPage() {
     void fetchOrder();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // First-time visit (within 30s of creation) → fire confetti.
+  const [didCelebrate, setDidCelebrate] = useState(false);
+  useEffect(() => {
+    if (didCelebrate || !order) return;
+    if (Date.now() - order.createdAt > 30_000) return;
+    setDidCelebrate(true);
+    void import("canvas-confetti").then(({ default: confetti }) => {
+      const fire = (opts: object) =>
+        confetti({
+          particleCount: 30,
+          spread: 70,
+          origin: { y: 0.55 },
+          colors: ["#F26A1A", "#FFD27A", "#FFE7B8", "#D9510C", "#3F7D20"],
+          ...opts,
+        });
+      fire({ angle: 60, origin: { x: 0, y: 0.6 } });
+      fire({ angle: 120, origin: { x: 1, y: 0.6 } });
+      setTimeout(() => fire({ origin: { y: 0.5 } }), 200);
+    });
+  }, [order, didCelebrate]);
 
   // Live polling — slows down once delivered/cancelled.
   useEffect(() => {
@@ -481,6 +507,39 @@ export default function OrderPage() {
       </div>
 
       <div className="mt-8 flex justify-center gap-3 flex-wrap">
+        <Button
+          onClick={() => {
+            // Re-add each item using slug → looks up live product info.
+            let added = 0;
+            for (const it of order.items) {
+              const meta =
+                slugLookup.get(it.productId) ?? productLookup.get(it.productId);
+              if (!meta) continue;
+              addItem({
+                productId: meta.id,
+                slug: meta.slug,
+                nameUk: meta.nameUk,
+                nameEn: meta.nameEn,
+                nameRu: meta.nameRu,
+                image: meta.image,
+                basePrice: meta.basePrice,
+                size: (it.size as "small" | "medium" | "large" | null) ?? null,
+                crust:
+                  (it.crust as "classic" | "thin" | "cheese" | null) ?? null,
+                extras: (it.extras as never) ?? [],
+                discount: meta.discount ?? 0,
+                quantity: it.quantity,
+              });
+              added += it.quantity;
+            }
+            if (added > 0) {
+              toast.success(t.reorder.added);
+              openCart();
+            }
+          }}
+        >
+          <Repeat className="h-4 w-4" /> {t.reorder.button}
+        </Button>
         <Link href="/orders">
           <Button variant="glass">
             <PackageCheck className="h-4 w-4" /> {t.auth.myOrders}

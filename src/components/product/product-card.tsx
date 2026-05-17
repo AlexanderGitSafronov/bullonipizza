@@ -69,6 +69,7 @@ export function ProductCard({
 
   const isFav = fav.has(product.id);
   const href = `/menu/${product.slug}`;
+  const outOfStock = product.inStock === false;
 
   return (
     <>
@@ -98,14 +99,22 @@ export function ProductCard({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
 
+          {outOfStock && (
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
+              <Badge variant="outline" className="text-xs uppercase tracking-wider bg-background/95">
+                {t.admin.outOfStock}
+              </Badge>
+            </div>
+          )}
+
           <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-            {product.isPopular && (
+            {product.isPopular && !outOfStock && (
               <Badge variant="hot">
                 <Flame className="h-3 w-3" />
                 {t.menu.popular}
               </Badge>
             )}
-            {product.discount && product.discount > 0 && (
+            {product.discount && product.discount > 0 && !outOfStock && (
               <Badge variant="warning">−{product.discount}%</Badge>
             )}
           </div>
@@ -148,6 +157,7 @@ export function ProductCard({
             <Button
               size="sm"
               onClick={handleQuickAdd}
+              disabled={outOfStock}
               className="rounded-2xl shrink-0 pointer-events-auto relative z-10"
               aria-label={t.product.addToCart}
             >

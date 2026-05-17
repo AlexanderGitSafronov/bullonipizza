@@ -19,6 +19,8 @@ import { useAuth } from "@/store/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrdersBoard } from "@/components/admin/orders-board";
+import { AdminAnalytics } from "@/components/admin/analytics";
+import { PromoCodesAdmin } from "@/components/admin/promo-codes";
 import {
   ProductEditor,
   type ProductRow,
@@ -26,7 +28,7 @@ import {
 } from "@/components/admin/product-editor";
 import { formatPrice, cn } from "@/lib/utils";
 
-type Tab = "orders" | "products";
+type Tab = "orders" | "products" | "promo" | "analytics";
 
 export default function AdminPage() {
   const { t } = useLocale();
@@ -176,24 +178,32 @@ export default function AdminPage() {
         ))}
       </div>
 
-      <div className="flex gap-2 mb-6">
-        {(["orders", "products"] as Tab[]).map((k) => (
+      <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide">
+        {(["orders", "products", "promo", "analytics"] as Tab[]).map((k) => (
           <button
             key={k}
             onClick={() => setTab(k)}
             className={cn(
-              "px-5 py-2.5 rounded-full text-sm font-medium transition-colors",
+              "px-5 py-2.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap shrink-0",
               tab === k
                 ? "bg-foreground text-background"
                 : "bg-secondary text-foreground"
             )}
           >
-            {k === "orders" ? t.admin.orders : t.admin.products}
+            {k === "orders"
+              ? t.admin.orders
+              : k === "products"
+                ? t.admin.products
+                : k === "promo"
+                  ? t.promo.label
+                  : t.admin.analytics}
           </button>
         ))}
       </div>
 
       {tab === "orders" && <OrdersBoard />}
+      {tab === "promo" && <PromoCodesAdmin />}
+      {tab === "analytics" && <AdminAnalytics />}
 
       {tab === "products" && (
         <div className="rounded-3xl border border-border bg-card overflow-hidden">

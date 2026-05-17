@@ -21,6 +21,11 @@ import { useAuth } from "@/store/auth";
 import { useAddresses } from "@/store/addresses";
 import { formatPrice, generateOrderNumber, cn } from "@/lib/utils";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validation";
+import {
+  PromoInput,
+  type AppliedPromo,
+} from "@/components/checkout/promo-input";
+import { SchedulePicker } from "@/components/checkout/schedule-picker";
 
 export default function CheckoutPage() {
   const { t, locale } = useLocale();
@@ -35,6 +40,8 @@ export default function CheckoutPage() {
     null
   );
   const [saveAddress, setSaveAddress] = useState(false);
+  const [promo, setPromo] = useState<AppliedPromo | null>(null);
+  const [scheduledFor, setScheduledFor] = useState<number | null>(null);
 
   const {
     register,
@@ -76,6 +83,11 @@ export default function CheckoutPage() {
     }
   }, [currentAddress, selectedAddressId, addresses]);
 
+  const subtotal = cart.subtotal();
+  const baseDeliveryFee = cart.deliveryFee();
+  const discount = promo?.discount ?? 0;
+  const total = Math.max(0, subtotal + baseDeliveryFee - discount);
+
   const onSubmit = async (data: CheckoutInput) => {
     if (items.length === 0) return;
     if (data.website) return; // honeypot tripped
@@ -101,9 +113,12 @@ export default function CheckoutPage() {
           extras: i.extras,
           price: i.unitPrice,
         })),
-        subtotal: cart.subtotal(),
-        deliveryFee: cart.deliveryFee(),
-        total: cart.total(),
+        subtotal,
+        deliveryFee: baseDeliveryFee,
+        discount,
+        promoCode: promo?.code ?? null,
+        total,
+        scheduledFor: scheduledFor ?? null,
         createdAt: Date.now(),
       };
 
@@ -340,6 +355,23 @@ export default function CheckoutPage() {
             </div>
           </Section>
 
+          <Section title={t.scheduled.title}>
+            <SchedulePicker
+              value={scheduledFor}
+              onChange={setScheduledFor}
+              locale={locale}
+            />
+          </Section>
+
+          <Section title={t.promo.label}>
+            <PromoInput
+              subtotal={subtotal}
+              applied={promo}
+              onApply={setPromo}
+              onRemove={() => setPromo(null)}
+            />
+          </Section>
+
           <Section title={locale === "en" ? "Consent" : locale === "ru" ? "Согласие" : "Згода"}>
             <ConsentCheckbox
               id="consent"
@@ -436,24 +468,33 @@ export default function CheckoutPage() {
             <div className="p-5 border-t border-border space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t.cart.subtotal}</span>
-                <span>{formatPrice(cart.subtotal())}</span>
+                <span>{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t.cart.delivery}</span>
                 <span>
-                  {cart.deliveryFee() === 0 ? (
+                  {baseDeliveryFee === 0 ? (
                     <span className="text-emerald-500 font-semibold">
                       {t.cart.free}
                     </span>
                   ) : (
-                    formatPrice(cart.deliveryFee())
+                    formatPrice(baseDeliveryFee)
                   )}
                 </span>
               </div>
+              {discount > 0 && promo && (
+                <div className="flex justify-between text-emerald-500">
+                  <span className="font-medium">
+                    {t.promo.discount} ·{" "}
+                    <span className="font-mono text-xs">{promo.code}</span>
+                  </span>
+                  <span className="font-semibold">−{formatPrice(discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-base font-bold pt-2 border-t border-border">
                 <span>{t.cart.total}</span>
                 <span className="text-gradient font-display text-xl">
-                  {formatPrice(cart.total())}
+                  {formatPrice(total)}
                 </span>
               </div>
               <Button

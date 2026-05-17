@@ -70,7 +70,10 @@ export const orderApiSchema = z.object({
   items: z.array(orderItemSchema).min(1).max(50),
   subtotal: z.number().min(0).max(1_000_000),
   deliveryFee: z.number().min(0).max(10_000),
+  discount: z.number().min(0).max(1_000_000).optional().default(0),
+  promoCode: z.string().regex(/^[A-Z0-9_-]{3,30}$/i).nullable().optional(),
   total: z.number().min(0).max(1_000_000),
+  scheduledFor: z.number().int().min(0).nullable().optional(),
   createdAt: z.number().int().min(0),
 });
 

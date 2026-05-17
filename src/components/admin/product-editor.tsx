@@ -29,6 +29,7 @@ export interface ProductRow {
   categoryId: string;
   isPopular: boolean;
   isAvailable: boolean;
+  inStock: boolean;
   hasSize: boolean;
   hasCrust: boolean;
   discount: number;
@@ -63,6 +64,7 @@ const emptyDraft = {
   categoryId: "",
   isPopular: false,
   isAvailable: true,
+  inStock: true,
   hasSize: true,
   hasCrust: true,
   discount: 0,
@@ -98,6 +100,7 @@ export function ProductEditor({
         categoryId: product.categoryId,
         isPopular: product.isPopular,
         isAvailable: product.isAvailable,
+        inStock: product.inStock,
         hasSize: product.hasSize,
         hasCrust: product.hasCrust,
         discount: product.discount,
@@ -278,6 +281,7 @@ export function ProductEditor({
             {[
               { k: "isPopular" as const, label: t.admin.popular },
               { k: "isAvailable" as const, label: t.admin.available },
+              { k: "inStock" as const, label: t.admin.inStock },
               { k: "hasSize" as const, label: t.admin.hasSize },
               { k: "hasCrust" as const, label: t.admin.hasCrust },
             ].map(({ k, label }) => (

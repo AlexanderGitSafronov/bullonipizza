@@ -31,6 +31,9 @@ export async function generateMetadata({
   };
 }
 
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://bullonipizza.vercel.app";
+
 export default async function ProductPage({
   params,
 }: {
@@ -39,5 +42,35 @@ export default async function ProductPage({
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
   const related = await getRelatedProducts(product.categorySlug, product.slug);
-  return <ProductDetail product={product} related={related} />;
+
+  // schema.org Product / Offer — gets surfaced in Google rich results.
+  const jsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: product.nameUk,
+    description: product.descUk,
+    image: [product.image],
+    sku: product.slug,
+    brand: { "@type": "Brand", name: "BulloniPizza" },
+    offers: {
+      "@type": "Offer",
+      url: `${BASE_URL}/menu/${product.slug}`,
+      priceCurrency: "UAH",
+      price: product.basePrice,
+      availability:
+        product.inStock !== false
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductDetail product={product} related={related} />
+    </>
+  );
 }
