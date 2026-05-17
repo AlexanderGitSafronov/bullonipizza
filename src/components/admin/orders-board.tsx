@@ -13,6 +13,7 @@ import {
 import toast from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/i18n/provider";
 import { formatPrice, cn } from "@/lib/utils";
 
 type Status =
@@ -35,7 +36,8 @@ interface AdminOrder {
   items: { id: string; quantity: number }[];
 }
 
-const ACTIVE_COLUMNS: Status[] = [
+type ActiveStatus = "PENDING" | "CONFIRMED" | "PREPARING" | "DELIVERING";
+const ACTIVE_COLUMNS: ActiveStatus[] = [
   "PENDING",
   "CONFIRMED",
   "PREPARING",
@@ -69,7 +71,28 @@ const STATUS_TONE: Record<Status, string> = {
   CANCELLED: "text-rose-500 bg-rose-500/10 border-rose-500/30",
 };
 
+const STATUS_KEY: Record<
+  ActiveStatus,
+  "pending" | "confirmed" | "preparing" | "delivering"
+> = {
+  PENDING: "pending",
+  CONFIRMED: "confirmed",
+  PREPARING: "preparing",
+  DELIVERING: "delivering",
+};
+
+function statusLabel(
+  t: ReturnType<typeof useLocale>["t"],
+  s: Status
+): string {
+  if (s === "PENDING" || s === "CONFIRMED" || s === "PREPARING" || s === "DELIVERING") {
+    return t.admin.statuses[STATUS_KEY[s]];
+  }
+  return t.order.statuses[s];
+}
+
 export function OrdersBoard() {
+  const { t, locale } = useLocale();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -99,20 +122,20 @@ export function OrdersBoard() {
       });
       const body = await res.json();
       if (!res.ok || !body.ok) {
-        toast.error(body.error || "Update failed");
+        toast.error(body.error || t.common.error);
         return;
       }
-      toast.success(`→ ${next}`);
+      toast.success(`→ ${statusLabel(t, next)}`);
       await load();
     } catch (err) {
-      toast.error((err as Error).message || "Update failed");
+      toast.error((err as Error).message || t.common.error);
     } finally {
       setUpdating(null);
     }
   };
 
   const cancel = async (order: AdminOrder) => {
-    if (!confirm(`Cancel ${order.orderNumber}?`)) return;
+    if (!confirm(`${t.admin.confirmCancel} ${order.orderNumber}?`)) return;
     await advance(order, "CANCELLED");
   };
 
@@ -120,13 +143,14 @@ export function OrdersBoard() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Radio className="h-3 w-3 text-primary animate-pulse" />
-        Live · refreshes every 8s · {orders.length} active
+        {t.admin.liveRefresh} · {orders.length} {t.admin.active}
       </div>
 
       <div className="grid lg:grid-cols-4 gap-3">
         {ACTIVE_COLUMNS.map((col) => {
           const list = orders.filter((o) => o.status === col);
           const Icon = STATUS_ICON[col];
+          const label = t.admin.statuses[STATUS_KEY[col]];
           return (
             <div
               key={col}
@@ -139,7 +163,7 @@ export function OrdersBoard() {
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4" />
                   <p className="text-xs font-semibold uppercase tracking-wider">
-                    {col}
+                    {label}
                   </p>
                 </div>
                 <Badge variant="outline" className="text-[10px]">
@@ -150,6 +174,7 @@ export function OrdersBoard() {
                 <AnimatePresence mode="popLayout">
                   {list.map((o) => {
                     const next = NEXT_STATUS[o.status];
+                    const nextLabel = next ? statusLabel(t, next) : "";
                     return (
                       <motion.div
                         key={o.id}
@@ -174,8 +199,9 @@ export function OrdersBoard() {
                           {o.address}
                         </p>
                         <p className="text-[11px] text-muted-foreground mt-1">
-                          {o.items.reduce((a, it) => a + it.quantity, 0)} pcs ·{" "}
-                          {new Date(o.createdAt).toLocaleTimeString("uk", {
+                          {o.items.reduce((a, it) => a + it.quantity, 0)}{" "}
+                          {t.admin.pcs} ·{" "}
+                          {new Date(o.createdAt).toLocaleTimeString(locale, {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
@@ -188,7 +214,7 @@ export function OrdersBoard() {
                               disabled={updating === o.id}
                               className="flex-1 h-7 text-[11px]"
                             >
-                              → {next}
+                              → {nextLabel}
                             </Button>
                           )}
                           <Button
@@ -207,7 +233,7 @@ export function OrdersBoard() {
                 </AnimatePresence>
                 {list.length === 0 && (
                   <p className="text-[11px] text-muted-foreground/60 px-1 py-2 italic">
-                    — empty —
+                    {t.admin.empty}
                   </p>
                 )}
               </div>

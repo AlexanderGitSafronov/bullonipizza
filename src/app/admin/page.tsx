@@ -29,7 +29,7 @@ import { formatPrice, cn } from "@/lib/utils";
 type Tab = "orders" | "products";
 
 export default function AdminPage() {
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const { user, loading } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("orders");
@@ -94,15 +94,9 @@ export default function AdminPage() {
           <Lock className="h-10 w-10 text-destructive" />
         </div>
         <h1 className="font-display text-3xl font-bold mb-2">
-          Access denied
+          {t.admin.accessDenied}
         </h1>
-        <p className="text-muted-foreground">
-          {locale === "en"
-            ? "Admin access only."
-            : locale === "ru"
-              ? "Только для администраторов."
-              : "Лише для адміністраторів."}
-        </p>
+        <p className="text-muted-foreground">{t.admin.adminOnly}</p>
       </div>
     );
   }
@@ -110,13 +104,13 @@ export default function AdminPage() {
   const statCards = [
     {
       icon: ShoppingBag,
-      label: locale === "en" ? "Active orders" : locale === "ru" ? "Активных заказов" : "Активних замовлень",
+      label: t.admin.activeOrders,
       value: stats.orders,
       color: "from-amber-500 to-orange-600",
     },
     {
       icon: TrendingUp,
-      label: locale === "en" ? "Active revenue" : locale === "ru" ? "Активная выручка" : "Активна виручка",
+      label: t.admin.activeRevenue,
       value: formatPrice(stats.revenue),
       color: "from-emerald-500 to-green-600",
     },
@@ -128,7 +122,7 @@ export default function AdminPage() {
     },
     {
       icon: Users,
-      label: locale === "en" ? "Customers" : locale === "ru" ? "Клиенты" : "Клієнти",
+      label: t.admin.customers,
       value: stats.customers,
       color: "from-violet-500 to-purple-600",
     },
@@ -207,9 +201,9 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-secondary/50">
                 <tr className="text-left text-xs text-muted-foreground uppercase">
-                  <th className="p-4">Product</th>
-                  <th className="p-4">Flags</th>
-                  <th className="p-4 text-right">Price</th>
+                  <th className="p-4">{t.admin.product}</th>
+                  <th className="p-4">{t.admin.flags}</th>
+                  <th className="p-4 text-right">{t.admin.price}</th>
                   <th className="p-4 w-1"></th>
                 </tr>
               </thead>
@@ -247,7 +241,7 @@ export default function AdminPage() {
                       <div className="flex flex-wrap gap-1">
                         {p.isPopular && <Badge variant="hot">🔥</Badge>}
                         {!p.isAvailable && (
-                          <Badge variant="outline">hidden</Badge>
+                          <Badge variant="outline">{t.admin.hidden}</Badge>
                         )}
                         {p.discount > 0 && (
                           <Badge variant="warning">−{p.discount}%</Badge>
@@ -274,7 +268,7 @@ export default function AdminPage() {
                           variant="ghost"
                           onClick={async () => {
                             if (
-                              !confirm(`Hide product "${p.nameUk}"?`)
+                              !confirm(`${t.admin.confirmHide} "${p.nameUk}"?`)
                             )
                               return;
                             await fetch(`/api/admin/products/${p.id}`, {
@@ -295,7 +289,7 @@ export default function AdminPage() {
                       colSpan={4}
                       className="p-8 text-center text-muted-foreground"
                     >
-                      No products yet
+                      {t.admin.noProducts}
                     </td>
                   </tr>
                 )}

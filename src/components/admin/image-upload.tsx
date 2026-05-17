@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { Upload, Loader2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
 
 export function ImageUpload({
@@ -14,16 +15,17 @@ export function ImageUpload({
   value: string;
   onChange: (url: string) => void;
 }) {
+  const { t } = useLocale();
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      toast.error("Only images are supported");
+      toast.error(t.admin.onlyImages);
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      toast.error("Max 8 MB");
+      toast.error(t.admin.maxSize);
       return;
     }
     setUploading(true);
@@ -33,7 +35,7 @@ export function ImageUpload({
       });
       const sig = await sigRes.json();
       if (!sig.ok) {
-        toast.error(sig.error || "Upload signature failed");
+        toast.error(sig.error || t.admin.uploadFailed);
         return;
       }
       const form = new FormData();
@@ -48,13 +50,13 @@ export function ImageUpload({
       );
       const up = await upRes.json();
       if (!up.secure_url) {
-        toast.error(up.error?.message || "Upload failed");
+        toast.error(up.error?.message || t.admin.uploadFailed);
         return;
       }
       onChange(up.secure_url);
-      toast.success("Uploaded ✓");
+      toast.success(t.admin.uploaded);
     } catch (err) {
-      toast.error((err as Error).message || "Upload failed");
+      toast.error((err as Error).message || t.admin.uploadFailed);
     } finally {
       setUploading(false);
     }
@@ -83,7 +85,7 @@ export function ImageUpload({
         ) : (
           <div className="text-center text-muted-foreground">
             <Upload className="h-8 w-8 mx-auto mb-2" />
-            <p className="text-xs">PNG / JPG / WEBP, ≤ 8 MB</p>
+            <p className="text-xs">{t.admin.imageHint}</p>
           </div>
         )}
         {uploading && (
@@ -112,7 +114,7 @@ export function ImageUpload({
         className={cn("w-full", uploading && "opacity-50")}
       >
         <Upload className="h-4 w-4" />
-        {uploading ? "Uploading..." : "Upload image"}
+        {uploading ? t.admin.uploading : t.admin.uploadImage}
       </Button>
     </div>
   );

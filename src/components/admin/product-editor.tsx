@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImageUpload } from "./image-upload";
+import { useLocale } from "@/i18n/provider";
 
 export interface ProductRow {
   id: string;
@@ -74,8 +75,12 @@ export function ProductEditor({
   categories,
   onSaved,
 }: Props) {
+  const { t, locale } = useLocale();
   const [draft, setDraft] = useState<typeof emptyDraft>(emptyDraft);
   const [submitting, setSubmitting] = useState(false);
+
+  const catNameKey =
+    locale === "uk" ? "nameUk" : locale === "en" ? "nameEn" : "nameRu";
 
   useEffect(() => {
     if (!open) return;
@@ -113,7 +118,7 @@ export function ProductEditor({
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!draft.image) {
-      toast.error("Image required");
+      toast.error(t.admin.imageRequired);
       return;
     }
     setSubmitting(true);
@@ -130,18 +135,28 @@ export function ProductEditor({
       );
       const body = await res.json();
       if (!res.ok || !body.ok) {
-        toast.error(body.error || "Save failed");
+        toast.error(
+          body.error === "slug_taken"
+            ? t.admin.slugTaken
+            : t.admin.saveFailed
+        );
         return;
       }
-      toast.success(product ? "Updated ✓" : "Created ✓");
+      toast.success(product ? t.admin.saved : t.admin.created);
       onSaved();
       onOpenChange(false);
     } catch (err) {
-      toast.error((err as Error).message || "Save failed");
+      toast.error((err as Error).message || t.admin.saveFailed);
     } finally {
       setSubmitting(false);
     }
   };
+
+  const langs: { code: "Uk" | "En" | "Ru"; label: string }[] = [
+    { code: "Uk", label: "🇺🇦 UK" },
+    { code: "En", label: "🇬🇧 EN" },
+    { code: "Ru", label: "🇷🇺 RU" },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -149,7 +164,9 @@ export function ProductEditor({
         <form onSubmit={onSubmit} className="p-6 md:p-8 space-y-5">
           <DialogHeader>
             <DialogTitle>
-              {product ? `Edit · ${product.nameUk}` : "New product"}
+              {product
+                ? `${t.admin.editProduct} · ${product.nameUk}`
+                : t.admin.newProduct}
             </DialogTitle>
           </DialogHeader>
 
@@ -161,7 +178,7 @@ export function ProductEditor({
 
             <div className="space-y-3">
               <div>
-                <Label htmlFor="slug">Slug</Label>
+                <Label htmlFor="slug">{t.admin.slug}</Label>
                 <Input
                   id="slug"
                   value={draft.slug}
@@ -173,7 +190,7 @@ export function ProductEditor({
                 />
               </div>
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">{t.admin.category}</Label>
                 <select
                   id="category"
                   value={draft.categoryId}
@@ -183,14 +200,14 @@ export function ProductEditor({
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.nameUk}
+                      {(c as unknown as Record<string, string>)[catNameKey]}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label htmlFor="price">Base price ₴</Label>
+                  <Label htmlFor="price">{t.admin.basePrice}</Label>
                   <Input
                     id="price"
                     type="number"
@@ -204,7 +221,7 @@ export function ProductEditor({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="discount">Discount %</Label>
+                  <Label htmlFor="discount">{t.admin.discount}</Label>
                   <Input
                     id="discount"
                     type="number"
@@ -221,24 +238,34 @@ export function ProductEditor({
           </div>
 
           <div className="grid md:grid-cols-3 gap-3">
-            {(["Uk", "En", "Ru"] as const).map((lang) => (
-              <div key={lang} className="space-y-2">
+            {langs.map(({ code, label }) => (
+              <div key={code} className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {lang}
+                  {label}
                 </p>
                 <Input
-                  placeholder={`Name (${lang})`}
-                  value={(draft as any)[`name${lang}`]}
+                  placeholder={`${t.admin.name} (${code})`}
+                  value={
+                    draft[`name${code}` as keyof typeof draft] as string
+                  }
                   onChange={(e) =>
-                    set(`name${lang}` as any, e.target.value)
+                    set(
+                      `name${code}` as keyof typeof draft,
+                      e.target.value as never
+                    )
                   }
                   required
                 />
                 <Textarea
-                  placeholder={`Description (${lang})`}
-                  value={(draft as any)[`desc${lang}`]}
+                  placeholder={`${t.admin.description} (${code})`}
+                  value={
+                    draft[`desc${code}` as keyof typeof draft] as string
+                  }
                   onChange={(e) =>
-                    set(`desc${lang}` as any, e.target.value)
+                    set(
+                      `desc${code}` as keyof typeof draft,
+                      e.target.value as never
+                    )
                   }
                   rows={3}
                   required
@@ -249,10 +276,10 @@ export function ProductEditor({
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
             {[
-              { k: "isPopular" as const, label: "Popular" },
-              { k: "isAvailable" as const, label: "Available" },
-              { k: "hasSize" as const, label: "Has sizes" },
-              { k: "hasCrust" as const, label: "Has crust" },
+              { k: "isPopular" as const, label: t.admin.popular },
+              { k: "isAvailable" as const, label: t.admin.available },
+              { k: "hasSize" as const, label: t.admin.hasSize },
+              { k: "hasCrust" as const, label: t.admin.hasCrust },
             ].map(({ k, label }) => (
               <label
                 key={k}
@@ -275,14 +302,14 @@ export function ProductEditor({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t.admin.cancel}
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting
-                ? "Saving..."
+                ? t.admin.saving
                 : product
-                  ? "Save changes"
-                  : "Create product"}
+                  ? t.admin.saveChanges
+                  : t.admin.createProduct}
             </Button>
           </div>
         </form>
