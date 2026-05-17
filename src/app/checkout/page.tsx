@@ -55,6 +55,7 @@ export default function CheckoutPage() {
         comment: data.comment ?? "",
         items: items.map((i) => ({
           productId: i.productId,
+          slug: i.slug,
           nameUk: i.nameUk,
           nameEn: i.nameEn,
           nameRu: i.nameRu,

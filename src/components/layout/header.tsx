@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useLocale } from "@/i18n/provider";
 import { useCart } from "@/store/cart";
 import { LanguageSwitcher } from "./language-switcher";
-import { ThemeSwitcher } from "./theme-switcher";
+import { AccountMenu } from "./account-menu";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -96,8 +96,8 @@ export function Header() {
               <Heart className="h-5 w-5" />
             </Button>
           </Link>
-          <ThemeSwitcher />
           <LanguageSwitcher />
+          <AccountMenu />
           <Button
             variant="default"
             size="sm"

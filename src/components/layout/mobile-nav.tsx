@@ -2,22 +2,32 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Pizza, Heart, ShoppingBag } from "lucide-react";
+import {
+  Home,
+  Pizza,
+  ShoppingBag,
+  PackageCheck,
+  User as UserIcon,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/i18n/provider";
 import { useCart } from "@/store/cart";
+import { useAuth } from "@/store/auth";
 
 export function MobileNav() {
   const pathname = usePathname();
   const { t } = useLocale();
   const itemCount = useCart((s) => s.itemCount());
   const openCart = useCart((s) => s.open);
+  const { user } = useAuth();
 
   const items = [
     { href: "/", label: t.nav.home, icon: Home },
     { href: "/menu", label: t.nav.menu, icon: Pizza },
-    { href: "/favorites", label: t.nav.favorites, icon: Heart },
+    user
+      ? { href: "/orders", label: t.nav.orders, icon: PackageCheck }
+      : { href: "/login", label: t.auth.login, icon: UserIcon },
   ];
 
   return (

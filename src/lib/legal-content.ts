@@ -5,7 +5,7 @@ type Doc = { updated: string; intro: string; sections: Section[] };
 
 export const privacyContent: Record<Locale, Doc> = {
   uk: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "BulloniPizza поважає вашу приватність. Цей документ пояснює, які персональні дані ми збираємо, навіщо, як зберігаємо та які у вас права згідно із Законом України «Про захист персональних даних» і Регламентом (ЄС) 2016/679 (GDPR).",
     sections: [
@@ -20,9 +20,10 @@ export const privacyContent: Record<Locale, Doc> = {
         title: "2. Які дані ми обробляємо",
         body: [
           "Контактні: ім'я, телефон, адреса доставки, коментар до замовлення.",
-          "Технічні: IP-адреса, тип пристрою, мова, обрана тема — лише для роботи сервісу.",
-          "Замовлення: склад кошика, історія замовлень.",
-          "Cookie: див. Політику cookie.",
+          "Акаунт (за реєстрації): email, хеш пароля (bcrypt), ім'я. Сам пароль ми не зберігаємо.",
+          "Технічні: IP-адреса, тип пристрою, мова — лише для роботи сервісу й безпеки.",
+          "Замовлення: склад кошика, історія замовлень, статус доставки.",
+          "Cookie: див. Політику cookie. Cookie сесії (bp_session) — HttpOnly, Secure, SameSite=Lax.",
         ],
       },
       {
@@ -73,7 +74,7 @@ export const privacyContent: Record<Locale, Doc> = {
     ],
   },
   en: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "BulloniPizza respects your privacy. This document explains what personal data we collect, why, how we store it and what rights you have under Regulation (EU) 2016/679 (GDPR) and the Ukrainian Personal Data Protection Act.",
     sections: [
@@ -88,9 +89,10 @@ export const privacyContent: Record<Locale, Doc> = {
         title: "2. What we process",
         body: [
           "Contact: name, phone, delivery address, order comment.",
-          "Technical: IP address, device type, language, theme — solely to operate the service.",
-          "Orders: cart contents, order history.",
-          "Cookies: see Cookie Policy.",
+          "Account (on sign-up): email, bcrypt password hash, name. We do not store the password itself.",
+          "Technical: IP address, device type, language — solely to operate the service and for security.",
+          "Orders: cart contents, order history, delivery status.",
+          "Cookies: see Cookie Policy. Session cookie (bp_session) is HttpOnly, Secure, SameSite=Lax.",
         ],
       },
       {
@@ -141,7 +143,7 @@ export const privacyContent: Record<Locale, Doc> = {
     ],
   },
   ru: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "BulloniPizza уважает вашу приватность. Этот документ объясняет, какие персональные данные мы собираем, зачем, как храним и какие у вас права согласно Закону Украины «О защите персональных данных» и Регламенту (ЕС) 2016/679 (GDPR).",
     sections: [
@@ -156,9 +158,10 @@ export const privacyContent: Record<Locale, Doc> = {
         title: "2. Какие данные мы обрабатываем",
         body: [
           "Контактные: имя, телефон, адрес доставки, комментарий к заказу.",
-          "Технические: IP-адрес, тип устройства, язык, выбранная тема — только для работы сервиса.",
-          "Заказы: состав корзины, история заказов.",
-          "Cookie: см. Политику cookie.",
+          "Аккаунт (при регистрации): email, хэш пароля (bcrypt), имя. Сам пароль мы не храним.",
+          "Технические: IP-адрес, тип устройства, язык — только для работы сервиса и безопасности.",
+          "Заказы: состав корзины, история заказов, статус доставки.",
+          "Cookie: см. Политику cookie. Cookie сессии (bp_session) — HttpOnly, Secure, SameSite=Lax.",
         ],
       },
       {
@@ -212,7 +215,7 @@ export const privacyContent: Record<Locale, Doc> = {
 
 export const cookieContent: Record<Locale, Doc> = {
   uk: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "Ця Політика пояснює, які cookie ми використовуємо на bullonipizza.com та як ви можете керувати своїми налаштуваннями.",
     sections: [
@@ -246,7 +249,7 @@ export const cookieContent: Record<Locale, Doc> = {
     ],
   },
   en: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "This Cookie Policy explains which cookies we use on bullonipizza.com and how you can control your preferences.",
     sections: [
@@ -280,7 +283,7 @@ export const cookieContent: Record<Locale, Doc> = {
     ],
   },
   ru: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "Эта Политика объясняет, какие cookie мы используем на bullonipizza.com и как вы можете управлять настройками.",
     sections: [
@@ -317,7 +320,7 @@ export const cookieContent: Record<Locale, Doc> = {
 
 export const termsContent: Record<Locale, Doc> = {
   uk: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "Розміщуючи замовлення на bullonipizza.com, ви приймаєте ці Умови сервісу.",
     sections: [
@@ -361,7 +364,7 @@ export const termsContent: Record<Locale, Doc> = {
     ],
   },
   en: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "By placing an order on bullonipizza.com you accept these Terms of Service.",
     sections: [
@@ -405,7 +408,7 @@ export const termsContent: Record<Locale, Doc> = {
     ],
   },
   ru: {
-    updated: "2026-05-17",
+    updated: "2026-05-18",
     intro:
       "Размещая заказ на bullonipizza.com, вы принимаете эти Условия сервиса.",
     sections: [

@@ -49,6 +49,7 @@ export type CheckoutInput = z.infer<typeof checkoutSchema>;
 
 export const orderItemSchema = z.object({
   productId: z.string().min(1).max(64),
+  slug: z.string().min(1).max(64),
   nameUk: z.string().max(120),
   nameEn: z.string().max(120),
   nameRu: z.string().max(120),

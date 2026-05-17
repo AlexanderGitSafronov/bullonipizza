@@ -6,11 +6,10 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <g transform="translate(96 96)" fill="#FFF8F1">
-    <path d="M160 0 L320 280 H0 Z" opacity="0.95"/>
-    <circle cx="110" cy="170" r="22" fill="#B33D0A"/>
-    <circle cx="200" cy="200" r="22" fill="#B33D0A"/>
-    <circle cx="155" cy="230" r="16" fill="#FFE7B8"/>
-    <circle cx="240" cy="160" r="14" fill="#FFE7B8"/>
-  </g>
+  <path d="M256 130 L388 372 H124 Z" fill="#FFF8F1"/>
+  <circle cx="208" cy="284" r="26" fill="#B33D0A"/>
+  <circle cx="304" cy="316" r="26" fill="#B33D0A"/>
+  <circle cx="262" cy="222" r="20" fill="#B33D0A"/>
+  <circle cx="240" cy="334" r="15" fill="#FFE7B8"/>
+  <circle cx="320" cy="252" r="13" fill="#FFE7B8"/>
 </svg>

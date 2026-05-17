@@ -3,6 +3,9 @@
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ComponentProps } from "react";
 
+// Dark-only mode — the app is locked to `dark` for the warm, premium look.
+// `forcedTheme` overrides any prior choice persisted in localStorage from
+// earlier versions of the app.
 export function ThemeProvider({
   children,
   ...props
@@ -10,9 +13,10 @@ export function ThemeProvider({
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange={false}
+      defaultTheme="dark"
+      forcedTheme="dark"
+      enableSystem={false}
+      disableTransitionOnChange
       {...props}
     >
       {children}
