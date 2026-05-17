@@ -251,6 +251,16 @@ export const en: Dictionary = {
     back: "Back",
     install: "Install app",
   },
+  notFound: {
+    code: "404",
+    title: "Oops, we lost a slice",
+    subtitle:
+      "The page you're looking for doesn't exist. Maybe someone ate it. Or it moved.",
+    home: "Back home",
+    menu: "Browse menu",
+    popular: "Try popular pizzas",
+    funFact: "Did you know? The first Margherita pizza was made in 1889.",
+  },
   auth: {
     login: "Log in",
     register: "Sign up",
